@@ -1,39 +1,15 @@
-import { sleep } from "./utils";
-
-async function solve(
-    arr,
-    setArr,
-    arrSize,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function solve(arr, arrSize) {
     const arrCopy = [...arr];
+    let data = [];
 
-    await mergeSort(
-        arrCopy,
-        0,
-        arrSize - 1,
-        setArr,
-        arrSize,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    mergeSort(arrCopy, 0, arrSize - 1, data);
+
+    return data;
 }
 
 export default solve;
 
-async function merge(
-    arrCopy,
-    left,
-    mid,
-    right,
-    setArr,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function merge(arrCopy, left, mid, right, data) {
     const n1 = mid - left + 1;
     const n2 = right - mid;
 
@@ -51,6 +27,12 @@ async function merge(
 
     // Merge the temp arrays back into arr[left..right]
     while (i < n1 && j < n2) {
+        // record step
+        data.push({
+            arr: [...arrCopy],
+            actionIndices: [k],
+        });
+
         if (L[i] <= R[j]) {
             arrCopy[k] = L[i];
             i++;
@@ -59,87 +41,53 @@ async function merge(
             j++;
         }
 
-        //  Update actionIndices
-        setActionIndices([k]);
-
-        setArr(arrCopy);
-        await sleep(speed, isOnGetter);
-
         k++;
     }
 
     // Copy the remaining elements of L[], if there are any
     while (i < n1) {
-        arrCopy[k] = L[i];
+        // record step
+        data.push({
+            arr: [...arrCopy],
+            actionIndices: [k],
+        });
 
-        //  Update actionIndices
-        setActionIndices([k]);
+        arrCopy[k] = L[i];
 
         i++;
         k++;
-
-        setArr(arrCopy);
-        await sleep(speed, isOnGetter);
     }
 
     // Copy the remaining elements of R[], if there are any
     while (j < n2) {
-        arrCopy[k] = R[j];
+        // record step
+        data.push({
+            arr: [...arrCopy],
+            actionIndices: [k],
+        });
 
-        //  Update actionIndices
-        setActionIndices([k]);
+        arrCopy[k] = R[j];
 
         j++;
         k++;
-
-        setArr(arrCopy);
-        await sleep(speed, isOnGetter);
     }
+
+    // record step
+    data.push({
+        arr: [...arrCopy],
+        actionIndices: [],
+    });
 }
 
-async function mergeSort(
-    arrCopy,
-    left,
-    right,
-    setArr,
-    arrSize,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function mergeSort(arrCopy, left, right, data) {
     if (left >= right) return;
 
     const mid = Math.floor(left + (right - left) / 2);
 
-    await mergeSort(
-        arrCopy,
-        left,
-        mid,
-        setArr,
-        arrSize,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
-    await mergeSort(
-        arrCopy,
-        mid + 1,
-        right,
-        setArr,
-        arrSize,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    // recursive calls for divided arrays
+    mergeSort(arrCopy, left, mid, data);
+    mergeSort(arrCopy, mid + 1, right, data);
 
-    await merge(
-        arrCopy,
-        left,
-        mid,
-        right,
-        setArr,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    // merge sorted divided arrays
+    merge(arrCopy, left, mid, right, data);
 }

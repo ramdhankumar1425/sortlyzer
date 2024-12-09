@@ -1,37 +1,15 @@
-import { sleep } from "./utils";
-
-async function solve(
-    arr,
-    setArr,
-    arrSize,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function solve(arr, arrSize) {
     const arrCopy = [...arr];
+    let data = [];
 
-    await quickSort(
-        arrCopy,
-        0,
-        arrSize - 1,
-        setArr,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    quickSort(arrCopy, 0, arrSize - 1, data);
+
+    return data;
 }
 
 export default solve;
 
-async function partition(
-    arr,
-    low,
-    high,
-    setArr,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function partition(arr, low, high, data) {
     // choose pivot
     const pivot = arr[low];
 
@@ -45,68 +23,42 @@ async function partition(
         while (j >= low && arr[j] > pivot) j--;
 
         if (i < j) {
+            // record step
+            data.push({
+                arr: [...arr],
+                actionIndices: [low, i, j],
+            });
+
             [arr[i], arr[j]] = [arr[j], arr[i]];
-
-            //  Update actionIndices
-            setActionIndices([low, i, j]);
-
-            setArr([...arr]);
-            await sleep(speed, isOnGetter);
         }
     }
 
+    // record step
+    data.push({
+        arr: [...arr],
+        actionIndices: [low, j],
+    });
+
     [arr[low], arr[j]] = [arr[j], arr[low]];
 
-    //  Update actionIndices
-    setActionIndices([low, j]);
-
-    setArr([...arr]);
-    await sleep(speed, isOnGetter);
+    // record step
+    data.push({
+        arr: [...arr],
+        actionIndices: [],
+    });
 
     return j;
 }
 
 // The QuickSort function implementation
-async function quickSort(
-    arr,
-    low,
-    high,
-    setArr,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function quickSort(arr, low, high, data) {
     // base case
     if (low >= high) return;
 
     // find pivot
-    const pivotIdx = await partition(
-        arr,
-        low,
-        high,
-        setArr,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    const pivotIdx = partition(arr, low, high, data);
 
     // recursive calls
-    await quickSort(
-        arr,
-        low,
-        pivotIdx - 1,
-        setArr,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
-    await quickSort(
-        arr,
-        pivotIdx + 1,
-        high,
-        setArr,
-        speed,
-        setActionIndices,
-        isOnGetter
-    );
+    quickSort(arr, low, pivotIdx - 1, data);
+    quickSort(arr, pivotIdx + 1, high, data);
 }

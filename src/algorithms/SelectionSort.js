@@ -1,14 +1,6 @@
-import { sleep } from "./utils";
-
-async function selectionSort(
-    arr,
-    setArr,
-    arrSize,
-    speed,
-    setActionIndices,
-    isOnGetter
-) {
+function selectionSort(arr, arrSize) {
     const arrCopy = [...arr];
+    let data = [];
 
     for (let i = 0; i < arrSize; i++) {
         let minEleIdx = i;
@@ -17,16 +9,23 @@ async function selectionSort(
             if (arrCopy[j] < arrCopy[minEleIdx]) minEleIdx = j;
         }
 
+        // record step
+        data.push({
+            arr: [...arrCopy],
+            actionIndices: [i, minEleIdx],
+        });
+
         // swap j'th and min'th
         [arrCopy[i], arrCopy[minEleIdx]] = [arrCopy[minEleIdx], arrCopy[i]];
-
-        //  Update actionIndices
-        setActionIndices([i, minEleIdx]);
-
-        setArr(arrCopy);
-
-        await sleep(speed, isOnGetter);
     }
+
+    // record step
+    data.push({
+        arr: [...arrCopy],
+        actionIndices: [],
+    });
+
+    return data;
 }
 
 export default selectionSort;

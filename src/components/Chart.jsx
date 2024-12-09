@@ -32,7 +32,10 @@ function Chart() {
     };
 
     return (
-        <div style={{ height: window.innerHeight - 62 }} className="p-1 w-full">
+        <div
+            style={{ height: window.innerHeight - 61 }}
+            className="p-1 w-full bg-gray-900"
+        >
             <Bar
                 options={{
                     ...options,

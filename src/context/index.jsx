@@ -20,31 +20,40 @@ const Context = createContext();
 // default - #9966ff
 // action - #ff6384
 // final - #4bc0c0
+
+// Delay based on speed
+// 1 - 1000
+// 2 - 500
+// 3 - 100
+// 4 - 50
+// 5 - 1
+
 const colors = {
     def: "#9966ff",
     action: "#e80707",
     final: "#4bc0c0",
 };
-const maxElement = 100;
+const maxElement = 5999;
 
 // Provider component
 export const Provider = ({ children }) => {
-    const [isOn, setIsOn] = useState(false); // On/Off
+    const [isOn, setIsOn] = useState(false); // On/Off state
     const isOnRef = useRef(isOn);
-    const [isAlreadyRunning, setIsAlreadyRunning] = useState(false); // already running algo
+    const [isSorted, setIsSorted] = useState(false);
 
+    const [data, setData] = useState([]); // to store all steps of sorting
     const [arr, setArr] = useState([]);
-    const [arrSize, setArrSize] = useState(10);
-    const [styleArr, setStyleArr] = useState([]);
+    const [arrSize, setArrSize] = useState(25);
+    const [styleArr, setStyleArr] = useState([]); // bar color array
+    const [actionIndices, setActionIndices] = useState([]); // indices that are checked or updated
 
     const [algorithm, setAlgorithm] = useState("bubble");
-    const [speed, setSpeed] = useState(1.001);
-
-    // store action and final indices
-    const [actionIndices, setActionIndices] = useState([]);
+    const [speed, setSpeed] = useState(1.001); // visualization speed
+    const [index, setIndex] = useState(0);
 
     // Function to randomize array
     const handleRandomizeArray = () => {
+        // console.log("Randomizing array...");
         let array = [];
 
         for (let i = 0; i < arrSize; i++) {
@@ -54,73 +63,37 @@ export const Provider = ({ children }) => {
 
         setArr(array);
 
-        // set style array to default
+        // set values to default
+        setIsOn(false);
+        setIsSorted(false);
         setActionIndices([]);
+        setData([]);
+        setIndex(0);
     };
 
     // Master function to handle all sorting
-    const handleSort = async () => {
-        console.log("Sorting started...");
+    const handleSort = () => {
+        // console.log("Sorting started...");
 
-        setIsAlreadyRunning(true);
+        let sortingData = [];
 
         if (algorithm == "bubble") {
-            await bubbleSort(
-                arr,
-                setArr,
-                arrSize,
-                speed,
-                setActionIndices,
-                isOnGetter
-            );
+            sortingData = bubbleSort(arr, arrSize);
         } else if (algorithm == "selection") {
-            await selectionSort(
-                arr,
-                setArr,
-                arrSize,
-                speed,
-                setActionIndices,
-                isOnGetter
-            );
+            sortingData = selectionSort(arr, arrSize);
         } else if (algorithm == "insertion") {
-            await insertionSort(
-                arr,
-                setArr,
-                arrSize,
-                speed,
-                setActionIndices,
-                isOnGetter
-            );
+            sortingData = insertionSort(arr, arrSize);
         } else if (algorithm == "merge") {
-            await mergeSort(
-                arr,
-                setArr,
-                arrSize,
-                speed,
-                setActionIndices,
-                isOnGetter
-            );
+            sortingData = mergeSort(arr, arrSize);
         } else if (algorithm == "quick") {
-            await quickSort(
-                arr,
-                setArr,
-                arrSize,
-                speed,
-                setActionIndices,
-                isOnGetter
-            );
+            sortingData = quickSort(arr, arrSize);
         }
 
-        console.log("Sorting done...");
+        // console.log("Sorting done...");
 
-        setIsAlreadyRunning(false);
-        setIsOn(false);
-
-        handleFinalTraversal();
+        setData(sortingData);
+        setIsSorted(true);
     };
-
-    // Function to get current state of isOn inside algorithms
-    const isOnGetter = () => isOnRef.current;
 
     // Function to manage styleArr
     const handleStyleArr = () => {
@@ -131,29 +104,95 @@ export const Provider = ({ children }) => {
         setStyleArr(updatedStyleArr);
     };
 
-    // Final traversal *****
-    const handleFinalTraversal = async () => {
-        for (let i = 0; i < arrSize; i++) {
+    // Function to reset to default
+    const handleReset = () => {
+        // console.log("Resetting...");
+        handleRandomizeArray();
+    };
+
+    // Function for final traversal
+    const handleFinalTraversal = () => {
+        // console.log("Final traversal...");
+        let i = 0;
+
+        // Final traversal
+        const interval = setInterval(() => {
+            if (i >= arrSize || !isOnRef.current) {
+                setIsOn(false);
+                clearInterval(interval);
+                return;
+            }
+
             setStyleArr((prev) =>
                 prev.map((_, j) => (j <= i ? colors.final : colors.def))
             );
 
-            await sleep(3);
+            i++;
+        }, 10);
+    };
+
+    // Function to handle visualization
+    const handleVisualization = async () => {
+        // console.log("Visualization started...");
+        let i = index;
+        let ms = 1000;
+
+        if (speed == 2) ms = 500;
+        else if (speed == 3) ms = 100;
+        else if (speed == 4) ms = 50;
+        else if (speed == 5) ms = 1;
+
+        const interval = setInterval(() => {
+            // if visualization is turned off in between
+            if (!isOnRef.current) {
+                setIndex(i);
+                clearInterval(interval);
+                return;
+            }
+            // If visualization is completed
+            else if (i >= data.length) {
+                clearInterval(interval);
+                setIndex(0);
+
+                // For final color traversal
+                handleFinalTraversal();
+                return;
+            }
+
+            const currState = data[i++];
+
+            setArr(currState.arr);
+            setActionIndices(currState.actionIndices);
+        }, ms);
+    };
+
+    // Function to handle step by step visualization
+    const handleStepByStepVisualization = (direction) => {
+        // console.log("Moving", direction);
+
+        if (direction == "Forward" && index < data.length - 1) {
+            const nextState = data[index + 1];
+
+            setArr(nextState.arr);
+            setActionIndices(nextState.actionIndices);
+
+            setIndex((prev) => prev + 1);
+        } else if (direction == "Backword" && index > 0) {
+            const prevState = data[index - 1];
+
+            setArr(prevState.arr);
+            setActionIndices(prevState.actionIndices);
+
+            setIndex((prev) => prev - 1);
         }
     };
 
-    // Function to reset to default
-    const handleReset = async () => {
-        await sleep(1);
+    // To activate visualization when sorting is done
+    useEffect(() => {
+        if (data.length == 0) return;
 
-        setIsOn(false);
-        setIsAlreadyRunning(false);
-        setArrSize(10);
-        handleRandomizeArray();
-        setStyleArr([]);
-        setAlgorithm("bubble");
-        setSpeed(1.001);
-    };
+        handleVisualization();
+    }, [data]);
 
     // To set style array whenever actionIndices changes
     useEffect(() => {
@@ -164,23 +203,26 @@ export const Provider = ({ children }) => {
     useEffect(() => {
         isOnRef.current = isOn;
 
-        if (isAlreadyRunning || !isOn) return;
+        if (!isOn) {
+            return;
+        } else if (data.length) {
+            handleVisualization();
+        } else {
+            // no actionIndices at start
+            setActionIndices([]);
 
-        // no actionIndices at start
-        setActionIndices([]);
-
-        handleSort();
+            handleSort();
+        }
     }, [isOn]);
 
     // To randomize arr
     useEffect(() => {
         handleRandomizeArray();
-    }, [arrSize]);
+    }, [arrSize, algorithm]);
 
     const values = useMemo(() => {
         return {
             arr,
-            setArr,
             styleArr,
             isOn,
             setIsOn,
@@ -192,6 +234,8 @@ export const Provider = ({ children }) => {
             setSpeed,
             handleRandomizeArray,
             handleReset,
+            handleStepByStepVisualization,
+            isSorted,
         };
     }, [
         arr,
@@ -207,6 +251,8 @@ export const Provider = ({ children }) => {
         setSpeed,
         handleRandomizeArray,
         handleReset,
+        handleStepByStepVisualization,
+        isSorted,
     ]);
 
     return <Context.Provider value={values}>{children}</Context.Provider>;
