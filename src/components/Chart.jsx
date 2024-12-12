@@ -1,4 +1,4 @@
-import React from "react";
+import { memo } from "react";
 import {
     Chart as ChartJS,
     CategoryScale,
@@ -47,4 +47,4 @@ function Chart() {
     );
 }
 
-export default Chart;
+export default memo(Chart);

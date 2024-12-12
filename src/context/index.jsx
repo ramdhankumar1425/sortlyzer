@@ -1,17 +1,18 @@
-import React, {
+import {
     createContext,
+    useCallback,
     useContext,
     useEffect,
     useMemo,
     useRef,
     useState,
 } from "react";
-import { sleep } from "../algorithms/utils";
 import bubbleSort from "../algorithms/BubbleSort";
 import selectionSort from "../algorithms/SelectionSort";
 import insertionSort from "../algorithms/InsertionSort";
 import mergeSort from "../algorithms/MergeSort";
 import quickSort from "../algorithms/QuickSort";
+import PropTypes from "prop-types";
 
 // Create a Context
 const Context = createContext();
@@ -72,7 +73,7 @@ export const Provider = ({ children }) => {
     };
 
     // Master function to handle all sorting
-    const handleSort = () => {
+    const handleSort = useCallback(() => {
         // console.log("Sorting started...");
 
         let sortingData = [];
@@ -93,25 +94,25 @@ export const Provider = ({ children }) => {
 
         setData(sortingData);
         setIsSorted(true);
-    };
+    }, [arr, arrSize, algorithm]);
 
     // Function to manage styleArr
-    const handleStyleArr = () => {
+    const handleStyleArr = useCallback(() => {
         const updatedStyleArr = arr.map((_, idx) =>
             actionIndices.includes(idx) ? colors.action : colors.def
         );
 
         setStyleArr(updatedStyleArr);
-    };
+    }, [actionIndices]);
 
     // Function to reset to default
-    const handleReset = () => {
+    const handleReset = useCallback(() => {
         // console.log("Resetting...");
         handleRandomizeArray();
-    };
+    }, [handleRandomizeArray]);
 
     // Function for final traversal
-    const handleFinalTraversal = () => {
+    const handleFinalTraversal = useCallback(() => {
         // console.log("Final traversal...");
         let i = 0;
 
@@ -129,10 +130,10 @@ export const Provider = ({ children }) => {
 
             i++;
         }, 10);
-    };
+    }, [arrSize]);
 
     // Function to handle visualization
-    const handleVisualization = async () => {
+    const handleVisualization = useCallback(async () => {
         // console.log("Visualization started...");
         let i = index;
         let ms = 1000;
@@ -164,28 +165,31 @@ export const Provider = ({ children }) => {
             setArr(currState.arr);
             setActionIndices(currState.actionIndices);
         }, ms);
-    };
+    }, [data, index, isOn, speed]);
 
     // Function to handle step by step visualization
-    const handleStepByStepVisualization = (direction) => {
-        // console.log("Moving", direction);
+    const handleStepByStepVisualization = useCallback(
+        (direction) => {
+            // console.log("Moving", direction);
 
-        if (direction == "Forward" && index < data.length - 1) {
-            const nextState = data[index + 1];
+            if (direction == "Forward" && index < data.length - 1) {
+                const nextState = data[index + 1];
 
-            setArr(nextState.arr);
-            setActionIndices(nextState.actionIndices);
+                setArr(nextState.arr);
+                setActionIndices(nextState.actionIndices);
 
-            setIndex((prev) => prev + 1);
-        } else if (direction == "Backword" && index > 0) {
-            const prevState = data[index - 1];
+                setIndex((prev) => prev + 1);
+            } else if (direction == "Backword" && index > 0) {
+                const prevState = data[index - 1];
 
-            setArr(prevState.arr);
-            setActionIndices(prevState.actionIndices);
+                setArr(prevState.arr);
+                setActionIndices(prevState.actionIndices);
 
-            setIndex((prev) => prev - 1);
-        }
-    };
+                setIndex((prev) => prev - 1);
+            }
+        },
+        [data, index]
+    );
 
     // To activate visualization when sorting is done
     useEffect(() => {
@@ -239,7 +243,6 @@ export const Provider = ({ children }) => {
         };
     }, [
         arr,
-        setArr,
         styleArr,
         isOn,
         setIsOn,
@@ -256,6 +259,10 @@ export const Provider = ({ children }) => {
     ]);
 
     return <Context.Provider value={values}>{children}</Context.Provider>;
+};
+
+Provider.propTypes = {
+    children: PropTypes.node.isRequired,
 };
 
 export const useProvider = () => useContext(Context);
